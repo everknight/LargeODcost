@@ -21,16 +21,16 @@ else:
 arcpy.env.workspace = od_input	
 tables = arcpy.ListTables()
 arcpy.AddMessage('Merging... This process may take a few hours...')
-outfile = arcpy.Merge_management(tables, output)
+arcpy.Merge_management(tables, output)
 
 arcpy.AddMessage('Adding {0} field...'.format(org_name))
-arcpy.AddField_management(outfile, org_name, "TEXT", field_length = IDfield_length)
+arcpy.AddField_management(output, org_name, "TEXT", field_length = IDfield_length)
 
 arcpy.AddMessage('Adding {0} field...'.format(dest_name))
-arcpy.AddField_management(outfile, dest_name, "TEXT", field_length = IDfield_length)
+arcpy.AddField_management(output, dest_name, "TEXT", field_length = IDfield_length)
 
 arcpy.AddMessage('Calculating {0} field...'.format(org_name))
-arcpy.CalculateField_management(outfile, org_name, '!Name!.split(\' - \')[0]', "PYTHON")
+arcpy.CalculateField_management(output, org_name, '!Name!.split(\' - \')[0]', "PYTHON")
 
 arcpy.AddMessage('Calculating {0} field...'.format(dest_name))
-arcpy.CalculateField_management(outfile, dest_name, '!Name!.split(\' - \')[1]', "PYTHON")
+arcpy.CalculateField_management(output, dest_name, '!Name!.split(\' - \')[1]', "PYTHON")
