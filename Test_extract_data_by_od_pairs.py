@@ -1,14 +1,14 @@
-import arcpy
+
 import sys, os, math
 #sys.path.append(os.path.split(os.path.realpath(__file__))[0])
 sys.path.append(r"C:\Users\lirui\OneDrive\Desktop\OD_git\LargeODcost")
 import timer_class as tc
 
-input_csv = arcpy.GetParameterAsText(0)                                                         #r"D:\US_Estimated_ODMatrix\tx_la_2010_zctas_pairs.csv"
-output_folder = arcpy.GetParameterAsText(1)
+input_csv = r"C:\Users\lirui\OneDrive\Desktop\test\Alabama_Alaska_District_of_Columbia_Pennsylvania_2010_zctas_pairs.csv"                                                     #r"D:\US_Estimated_ODMatrix\tx_la_2010_zctas_pairs.csv"
+output_folder = r"C:\Users\lirui\OneDrive\Desktop\test"
 output_csv = output_folder+"\\zcta_OD_extract_for_" + os.path.split(input_csv)[1]               #r"D:\US_Estimated_ODMatrix\tx_la_2010_zctas_OD_extracts.csv"
-db1 = arcpy.GetParameterAsText(2)                                                               #r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour03"
-db2 = arcpy.GetParameterAsText(3)                                                               #r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour36"
+db1 = r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour03"                                                               #r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour03"
+db2 = r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour36"                                                          #r"D:\US_Estimated_ODMatrix\US_OD_data_plain\hour36"
 lvl3_at = 33.91
 lvl3_bt = 0.88
 lvl3_ad = 20.86
@@ -27,7 +27,7 @@ def cal_geodesic_dist (x1, y1, x2, y2):
     return d
 
 class data_station:
-    def __init__ (self, nlimit = 100000):
+    def __init__ (self, nlimit = 2000000):
         self.n = 0
         self.data = {}
         self.nlimit = nlimit
@@ -36,7 +36,8 @@ class data_station:
         self.n += 1
         if key in self.data:
             if key1 in self.data[key]:
-                arcpy.AddWarning("Repetitive key pair found: {0} - {1}".format(key, key1))
+                #arcpy.AddWarning("Repetitive key pair found: {0} - {1}".format(key, key1))
+                print("Repetitive key pair found: {0} - {1}".format(key, key1))
             self.data[key][key1] = d
         else: 
             self.data[key] = {}
@@ -100,11 +101,20 @@ def cal_data_lv3(ozcta, odict, lvl3_at, lvl3_bt, lvl3_ad, lvl3_bd, output_csv, s
         
         
 def fetch_info_and_write(rs, db1, db2, output_csv, lvl3_at, lvl3_bt, lvl3_ad, lvl3_bd, lvl3_speed):
-    arcpy.AddMessage("Writing results to disk... This may take a few minutes".format(i))
     for each_ozcta in rs.data:
+        temp_t = tc.timer()
+        n0 = len(rs.data[each_ozcta])
         lv11_leftover = get_data_from_lv1(each_ozcta, rs.data[each_ozcta], db1, output_csv)
+        n1 = n0 - len(lv11_leftover)
+        n10 = len(lv11_leftover)
+        temp_t.lap()
         lvl2_leftover = get_data_from_lv2(each_ozcta, lv11_leftover, db1, output_csv)
+        n3 = len(lvl2_leftover)
+        n2 = n10 - n3
+        temp_t.lap()
         cal_data_lv3(each_ozcta, lvl2_leftover, lvl3_at, lvl3_bt, lvl3_ad, lvl3_bd, output_csv, lvl3_speed)
+        temp_t.lap()
+        print("lvl1:{0}s - {3}\nlvl2:{1}s - {4}\nlvl3:{2}s - {5}\n\n".format(temp_t.time_int[0], temp_t.time_int[1], temp_t.time_int[2], n1, n2, n3))
     rs.reset()
 
 
@@ -123,7 +133,7 @@ i = 0
 row = indata.readline()
 while row:
     if i % 10000 == 0:
-        arcpy.AddMessage("Retrieving {0} records...".format(i))
+        #arcpy.AddMessage("Retrieving {0} records...".format(i))
         print("Retrieving {0} records...".format(i))
     row_content = row.replace("\n", "").split(",")
     temp_ozcta = row_content[iozcta]
